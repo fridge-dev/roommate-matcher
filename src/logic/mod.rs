@@ -62,6 +62,9 @@ pub fn match_roommates(mut unmatched_people: UnmatchedPeople) -> Result<MatchOut
 
     // TODO:1 Add more rules.
 
+    // TODO:1.5 dynamically update choices to remove matched people from unmatched peoples' choices.
+    // TODO:1.5 add condition to check for early termination that all remaining unmatched people have no valid choices remaining.
+
     let outcome = MatchOutcome {
         matches,
         unmatched: unmatched_people.drain_all_names(),
