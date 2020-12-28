@@ -44,7 +44,7 @@ pub enum MatchError {
 pub fn match_roommates(mut unmatched_people: UnmatchedPeople) -> Result<MatchOutcome, MatchError> {
     let mut matches = Vec::with_capacity(unmatched_people.count() / 2);
 
-    // Match Rule 1: Find all matches where people chose each other as their number 1 choice.
+    // Match Rule 1: Match people who chose each other as #1 choice.
     for current_person in unmatched_people.iterator() {
         if let Some(first_choice_name) = current_person.choice(0) {
             if let Some(first_choice_person) = unmatched_people.get(first_choice_name) {
