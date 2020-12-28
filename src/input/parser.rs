@@ -1,4 +1,4 @@
-use crate::model::PersonData;
+use crate::model::{PersonData, UnmatchedPeople};
 use crate::input::InputError;
 
 /// `parse` expects data in the form of a CSV file with the schema:
@@ -6,7 +6,13 @@ use crate::input::InputError;
 /// `my name,first preference,second preference,third preference`
 ///
 /// where all preferences are optional.
-pub fn parse(lines: Vec<String>) -> Result<Vec<PersonData>, InputError> {
+pub fn parse(lines: Vec<String>) -> Result<UnmatchedPeople, InputError> {
+    let people_data = parse_lines(lines)?;
+
+    UnmatchedPeople::try_create(people_data)
+}
+
+fn parse_lines(lines: Vec<String>) -> Result<Vec<PersonData>, InputError> {
     let mut people_data = Vec::with_capacity(lines.len());
 
     for line in lines {
@@ -57,7 +63,7 @@ mod tests {
             .map(|l| l.into())
             .collect();
 
-        let people = parse(lines).unwrap();
+        let people = parse_lines(lines).unwrap();
         assert_eq!(people, vec![
             PersonData::new("1a".into(), vec!["1b".into(), "1c".into(), "1d".into()]),
             PersonData::new("2a".into(), vec!["2b".into(), "2c".into(), "2d".into()]),
@@ -81,7 +87,7 @@ mod tests {
         ];
 
         for invalid_file in invalid_files {
-            parse(invalid_file).unwrap_err();
+            parse_lines(invalid_file).unwrap_err();
         }
     }
 }
