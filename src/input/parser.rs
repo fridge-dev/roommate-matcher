@@ -16,6 +16,7 @@ pub fn parse(lines: Vec<String>) -> Result<Vec<PersonData>, InputError> {
     Ok(people_data)
 }
 
+// TODO:2 Fail if missing first choice but has subsequent choices.
 fn try_parse_line(line: String) -> Result<PersonData, InputError> {
     let mut values_iter = line.split(",")
         .into_iter()

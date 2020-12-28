@@ -8,10 +8,10 @@ fn main() {
     let (_, filepath) = get_cli_args();
 
     // TODO:2 better handle file error
-    let lines = read_lines_from_file(filepath)?;
+    let lines = read_lines_from_file(filepath).expect("Failed to read file");
 
     // TODO:2 handle err
-    match_roommates_from_csv_lines(lines)?;
+    match_roommates_from_csv_lines(lines).expect("Failed to generate matches");
 }
 
 fn get_cli_args() -> (String, String) {
