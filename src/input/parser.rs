@@ -1,5 +1,7 @@
 use crate::model::{PersonData, UnmatchedPeople};
 use crate::input::InputError;
+use std::collections::HashMap;
+use std::hash::Hash;
 
 /// `parse` expects data in the form of a CSV file with the schema:
 ///
@@ -7,9 +9,19 @@ use crate::input::InputError;
 ///
 /// where all preferences are optional.
 pub fn parse(lines: Vec<String>) -> Result<UnmatchedPeople, InputError> {
+    if lines.is_empty() {
+        return Err(InputError::NoData);
+    }
+
     let people_data = parse_lines(lines)?;
 
-    UnmatchedPeople::try_create(people_data)
+    // Rule: Person names (left-most value) are unique.
+    let people_by_name = map_with_unique_index(people_data, |person| person.person_name().into())
+        .map_err(|duplicate_name| InputError::DuplicatePerson(duplicate_name))?;
+
+    validate_preferences_exist_and_dont_refer_to_self(&people_by_name)?;
+
+    Ok(UnmatchedPeople::new(people_by_name))
 }
 
 fn parse_lines(lines: Vec<String>) -> Result<Vec<PersonData>, InputError> {
@@ -42,6 +54,45 @@ fn try_parse_line(line: String) -> Result<PersonData, InputError> {
     let preferences: Vec<_> = values_iter.filter(|v| !v.is_empty()).collect();
 
     Ok(PersonData::new(name, preferences))
+}
+
+/// Returns a HashMap that is guaranteed to have uniquely indexed all of the values. If duplicate is
+/// present, the key for the duplicate is returned as an Err.
+fn map_with_unique_index<K, V, F>(values: Vec<V>, key_for_value: F) -> Result<HashMap<K, V>, K>
+    where
+        K: Hash + Eq,
+        F: Fn(&V) -> K,
+{
+    let mut map = HashMap::with_capacity(values.len());
+
+    for v in values {
+        if let Some(duplicate) = map.insert(key_for_value(&v), v) {
+            return Err(key_for_value(&duplicate));
+        }
+    }
+
+    Ok(map)
+}
+
+fn validate_preferences_exist_and_dont_refer_to_self(people: &HashMap<String, PersonData>) -> Result<(), InputError> {
+    for (person_name, person_data) in people {
+        for choice_name in person_data.choices() {
+            // Rule: You cannot choose yourself.
+            if choice_name == person_name {
+                return Err(InputError::SelfChoice(person_name.into()))
+            }
+
+            // Rule: Preferences must exist as a person name.
+            if !people.contains_key(choice_name) {
+                return Err(InputError::ChoseMissingPerson {
+                    person_name: person_name.into(),
+                    invalid_choice: choice_name.into(),
+                })
+            }
+        }
+    }
+
+    Ok(())
 }
 
 #[cfg(test)]

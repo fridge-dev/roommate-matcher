@@ -17,16 +17,14 @@ pub enum MatchError {
 
 // Note on efficiency: This is horrible. There's probably a smart way to do this. But let's get
 // a working version first.
-//
-// Assumption: any `preference` is present in person_name. TODO:1 impl validator.
 pub fn match_roommates(mut unmatched_people: UnmatchedPeople) -> Result<MatchOutcome, MatchError> {
     let mut matches = Vec::with_capacity(unmatched_people.count() / 2);
 
     // Rule 1: Find all matches where people chose each other as their number 1 choice.
     for current_person in unmatched_people.iterator() {
-        if let Some(first_choice_name) = current_person.get_choice(0) {
+        if let Some(first_choice_name) = current_person.choice(0) {
             if let Some(first_choice_person) = unmatched_people.get(first_choice_name) {
-                if let Some(first_choices_first_choice_name) = first_choice_person.get_choice(0) {
+                if let Some(first_choices_first_choice_name) = first_choice_person.choice(0) {
                     if current_person.person_name() == first_choices_first_choice_name {
                         // It's a match!
                         matches.push(Assignment(current_person.person_name().into(), first_choice_name.into()));
@@ -37,6 +35,8 @@ pub fn match_roommates(mut unmatched_people: UnmatchedPeople) -> Result<MatchOut
             }
         }
     }
+
+    // TODO:1 Add more rules.
 
     let outcome = MatchOutcome {
         matches,
