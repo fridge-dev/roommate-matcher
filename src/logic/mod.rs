@@ -1,11 +1,35 @@
 use crate::model::UnmatchedPeople;
+use std::fmt::{Display, Formatter};
+use core::fmt;
 
 // TODO:3 include debug info
+#[derive(Debug)]
 pub struct Assignment(String, String);
 
+#[derive(Debug)]
 pub struct MatchOutcome {
     pub matches: Vec<Assignment>,
     pub unmatched: Vec<String>,
+}
+
+impl Display for MatchOutcome {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        let mut lines: Vec<String> = Vec::new();
+
+        lines.push("-- Matches --".into());
+        self.matches
+            .iter()
+            .map(|assignment| format!("{} & {}", assignment.0, assignment.1))
+            .for_each(|line| lines.push(line));
+
+        lines.push("".into());
+        lines.push("-- Unmatched --".into());
+        for p in self.unmatched.iter() {
+            lines.push(p.into());
+        }
+
+        f.write_str(&lines.join("\n"))
+    }
 }
 
 #[derive(thiserror::Error, Debug)]
@@ -20,7 +44,7 @@ pub enum MatchError {
 pub fn match_roommates(mut unmatched_people: UnmatchedPeople) -> Result<MatchOutcome, MatchError> {
     let mut matches = Vec::with_capacity(unmatched_people.count() / 2);
 
-    // Rule 1: Find all matches where people chose each other as their number 1 choice.
+    // Match Rule 1: Find all matches where people chose each other as their number 1 choice.
     for current_person in unmatched_people.iterator() {
         if let Some(first_choice_name) = current_person.choice(0) {
             if let Some(first_choice_person) = unmatched_people.get(first_choice_name) {

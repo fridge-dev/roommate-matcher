@@ -2,16 +2,22 @@ use std::path::Path;
 use std::fs::File;
 use std::io::{BufReader, BufRead};
 use std::{io, env, process};
-use roommate_matcher::match_roommates_from_csv_lines;
+use roommate_matcher::{match_roommates_from_csv_lines, MatchOutcome};
 
 fn main() {
     let (_, filepath) = get_cli_args();
 
-    // TODO:2 better handle file error
-    let lines = read_lines_from_file(filepath).expect("Failed to read file");
+    let lines = match read_lines_from_file(filepath.clone()) {
+        Ok(lines) => lines,
+        Err(e) => exit_with_message(format!("Failed to read file '{}' - {}. Raw Error: {:?}", filepath, e, e)),
+    };
 
-    // TODO:2 handle err
-    match_roommates_from_csv_lines(lines).expect("Failed to generate matches");
+    let outcome = match match_roommates_from_csv_lines(lines) {
+        Ok(outcome) => outcome,
+        Err(e) => exit_with_message(format!("Failed to generate matches: {}. Raw Error: {:?}", e, e)),
+    };
+
+    display(outcome);
 }
 
 fn get_cli_args() -> (String, String) {
@@ -39,6 +45,11 @@ fn print_usage_exit(program_name: &str) -> ! {
     process::exit(1);
 }
 
+fn exit_with_message(message: String) -> ! {
+    eprintln!("{}", message);
+    process::exit(2);
+}
+
 fn read_lines_from_file<P: AsRef<Path>>(path: P) -> io::Result<Vec<String>> {
     let file = File::open(path)?;
     let reader = BufReader::new(file);
@@ -48,4 +59,10 @@ fn read_lines_from_file<P: AsRef<Path>>(path: P) -> io::Result<Vec<String>> {
     }
 
     Ok(lines)
+}
+
+fn display(outcome: MatchOutcome) {
+    println!("Success!");
+    println!();
+    println!("{}", outcome);
 }

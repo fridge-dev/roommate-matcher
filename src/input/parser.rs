@@ -15,7 +15,7 @@ pub fn parse(lines: Vec<String>) -> Result<UnmatchedPeople, InputError> {
 
     let people_data = parse_lines(lines)?;
 
-    // Rule: Person names (left-most value) are unique.
+    // Input Rule: Person names (left-most value) are unique.
     let people_by_name = map_with_unique_index(people_data, |person| person.person_name().into())
         .map_err(|duplicate_name| InputError::DuplicatePerson(duplicate_name))?;
 
@@ -41,6 +41,7 @@ fn try_parse_line(line: String) -> Result<PersonData, InputError> {
 
     // First value is person's name, and it is required. We filter empty str separately than the
     // iterator to ensure the first value before a "," is present.
+    // TODO:2 add line number
     let raw_line_for_error = line.clone();
     let name = values_iter.next().filter(|v| !v.is_empty()).ok_or_else(|| {
         InputError::BadLine {
@@ -77,12 +78,12 @@ fn map_with_unique_index<K, V, F>(values: Vec<V>, key_for_value: F) -> Result<Ha
 fn validate_preferences_exist_and_dont_refer_to_self(people: &HashMap<String, PersonData>) -> Result<(), InputError> {
     for (person_name, person_data) in people {
         for choice_name in person_data.choices() {
-            // Rule: You cannot choose yourself.
+            // Input Rule: You cannot choose yourself.
             if choice_name == person_name {
                 return Err(InputError::SelfChoice(person_name.into()))
             }
 
-            // Rule: Preferences must exist as a person name.
+            // Input Rule: Preferences must exist as a person name.
             if !people.contains_key(choice_name) {
                 return Err(InputError::ChoseMissingPerson {
                     person_name: person_name.into(),
