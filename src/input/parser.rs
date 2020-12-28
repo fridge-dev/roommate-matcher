@@ -22,7 +22,6 @@ fn parse_lines(lines: Vec<String>) -> Result<Vec<PersonData>, InputError> {
     Ok(people_data)
 }
 
-// TODO:2 Fail if missing first choice but has subsequent choices.
 fn try_parse_line(line: String) -> Result<PersonData, InputError> {
     let mut values_iter = line.split(",")
         .into_iter()
@@ -39,6 +38,7 @@ fn try_parse_line(line: String) -> Result<PersonData, InputError> {
     })?;
 
     // Remaining values are optional. We treat lines like "my name,,," the same as "my name".
+    // We also treat "my name,,other person," the same as "my name,other person"
     let preferences: Vec<_> = values_iter.filter(|v| !v.is_empty()).collect();
 
     Ok(PersonData::new(name, preferences))
@@ -59,6 +59,7 @@ mod tests {
             " 6a ",
             " 7a, ",
             " 8a, 8b ",
+            " 9a,,,9b ",
         ].into_iter()
             .map(|l| l.into())
             .collect();
@@ -73,6 +74,7 @@ mod tests {
             PersonData::new("6a".into(), vec![]),
             PersonData::new("7a".into(), vec![]),
             PersonData::new("8a".into(), vec!["8b".into()]),
+            PersonData::new("9a".into(), vec!["9b".into()]),
         ]);
     }
 
